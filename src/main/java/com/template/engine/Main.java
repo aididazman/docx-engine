@@ -35,7 +35,7 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			System.out.println("Step 1 : Read template file");
-			String templateFileName = "nestedCollection-2.docx";
+			String templateFileName = "sampleDocument.docx";
 			byte[] templateFile = readTemplateFile(templateFileName);
 
 			System.out.println("Step 2 : Prepare sample value");
@@ -43,7 +43,7 @@ public class Main {
 
 			System.out.println("Step 3 : Generate output file from template");
 			byte[] outputFile = process(templateFile, null, TemplateMode.DOCX, values);
-			String outputFileName = "nestedCollection_2.docx";
+			String outputFileName = "sampleDocument_1.docx";
 			writeFile(outputFile, outputFileName);
 
 			System.out.println("Completed.");
@@ -148,7 +148,7 @@ public class Main {
 		
 		Map<String, Object> values = new HashMap<String, Object>();
 		values.put("listOfPhone", listOfPhone);
-		//values.put("user.phones", aidid);
+		//values.put("user.phones", aidid); // for non nested 
 		values.put("listOfUser", listOfUser);
 		values.put("headerAndFooter.header", headerAndFooter);
 		values.put("footer", "This is footer");
@@ -171,15 +171,11 @@ public class Main {
 
 			if (content == null)
 				throw new Exception("Template content is null.");
-
-//			AllTagProcessor allTagProcessor = new AllTagProcessor(content, resolutionAttributesMap);
-//			return allTagProcessor.generateDocument();
 			
 			TestProcessor testTagProcessor = new TestProcessor(content, resolutionAttributesMap);
 			return testTagProcessor.generateDocument();
 
 		} catch (Exception e) {
-//			System.err.format("ERROR : %s", e.getMessage());
 			e.printStackTrace();
 		}
 

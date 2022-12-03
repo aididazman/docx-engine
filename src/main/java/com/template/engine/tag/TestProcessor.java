@@ -75,7 +75,7 @@ public class TestProcessor {
 			IBodyElement bodyElem = document.getBodyElements().get(0);
 			while (bodyElem != null) {
 				processTagType(bodyElem, resolutionAttributesMap, collectionDO);
-				//returns next element
+				//returns next element after removing in-replaced tags
 				bodyElem = removeTagsByElement(bodyElem);
 				//bodyElem = DocxUtils.getNextSibling(bodyElem);
 			}
@@ -194,7 +194,7 @@ public class TestProcessor {
 				// example value// -> users:user / user.phones:phone
 				String tagName = DocxUtils.getTagName(tag, DocxConstants.TAG_PREFIX_COLLECTION_START);
 				objectKey = collectionTag.getFirstParameter(tagName); // user.phones:phone -> user.phones or listOfUser:user-> listOfUser
-				//for nested collection //TODO
+				//for nested collection 
 				if (resolutionAttributesMap.containsKey(objectKey)) {
 					if (collectionDO.isHasNestedCollection()) {
 						IBodyElement nextElem = DocxUtils.getNextSibling(paragraph);

@@ -1,34 +1,16 @@
 package com.template.engine.tag;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 
 import com.template.engine.model.TagInfo;
-import com.template.engine.utils.DocxConstants;
 import com.template.engine.utils.DocxUtils;
 
 public class HeaderFooterTagProcessor {
 	
 	private static final Pattern FIELD_OBJECT_PATTERN = Pattern.compile("[a-zA-Z]+\\.[a-zA-Z]+");
-
-	private String getTagValue(String tagObjectField, Object mapValue) {
-		Object value = null;
-		try {
-			value = PropertyUtils.getSimpleProperty(mapValue, tagObjectField);
-		} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-			throw new RuntimeException("Cannot get tag " + tagObjectField + " value from the context");
-		}
-		String tagValue = value == null ? null : value.toString();
-		if (tagValue == null) {
-			tagValue = DocxConstants.EMPTY_STRING;
-		}
-
-		return tagValue;
-	}
 
 	public String processValue(TagInfo tag, Map<String, Object> resolutionAttributesMap, String tagName) {
 
@@ -44,7 +26,7 @@ public class HeaderFooterTagProcessor {
 			// check whether tag object name equals the name of the class from map value
 			if (mapValue.getClass().getSimpleName().equalsIgnoreCase(tagObjectName)) {
 				String tagObjectField = getSecondParameterTypeTwo(tagName); // get name from user.name
-				value = getTagValue(tagObjectField, mapValue);
+				value = DocxUtils.getFieldValue(tagObjectField, mapValue); 
 			}
 		}
 

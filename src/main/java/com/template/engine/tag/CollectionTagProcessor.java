@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.IBody;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -136,22 +135,6 @@ public class CollectionTagProcessor {
 		return listOfItems;
 	}
 
-	private String getFieldValue(Object mapValue, String objectField) {
-
-		Object value = null;
-		try {
-			value = PropertyUtils.getSimpleProperty(mapValue, objectField);
-		} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-			throw new RuntimeException("Cannot get tag " + objectField + " value from the context");
-		}
-		String tagValue = value == null ? null : value.toString();
-		if (tagValue == null) {
-			tagValue = DocxConstants.EMPTY_STRING;
-		}
-
-		return tagValue;
-	}
-
 	private CollectionDO getCollectionValues(CollectionDO collectionDO) {
 
 		// check type pattern
@@ -205,7 +188,7 @@ public class CollectionTagProcessor {
 							// example value from user.name -> name
 							String objectField = getClassField(tag.getTagText());
 							// get the value of the field based on the tag object field
-							String value = getFieldValue(collectionValue, objectField);
+							String value = DocxUtils.getFieldValue(objectField, collectionValue);
 							boolean isLastTag = tag == tags.get(tags.size() - 1);
 							// replace tag text with
 							insertNewParagraph(paragraph, value, collectionDO.getEndCollectionElement(), isLastTag);
@@ -223,8 +206,6 @@ public class CollectionTagProcessor {
 							String nestedCollectionName = getFirstParameter(tagName);
 							// returns user from user.phones
 							String nestedCollectionClassName = getClassName(nestedCollectionName);
-							// returns example value user.phones -> phones -> change key to user.phones
-							// String tagObjectName = getObjectNameTypeTwo(nestedCollectionObjectName);
 
 							// belongs to parent collection values
 							if (collectionValue.getClass().getSimpleName().equalsIgnoreCase(nestedCollectionClassName)) {
@@ -363,7 +344,7 @@ public class CollectionTagProcessor {
 
 										if (collectionValue.getClass().getSimpleName().equalsIgnoreCase(className)) {
 											String objectField = getClassField(tag.getTagText());
-											String value = getFieldValue(collectionValue, objectField);
+											String value = DocxUtils.getFieldValue(objectField, collectionValue);
 											text = text.replace(text, value);
 											run.setText(value, 0);
 										}
@@ -422,7 +403,7 @@ public class CollectionTagProcessor {
 
 								if (collectionValue.getClass().getSimpleName().equalsIgnoreCase(className)) {
 									String objectField = getClassField(tag.getTagText());
-									String value = getFieldValue(collectionValue, objectField);
+									String value = DocxUtils.getFieldValue(objectField, collectionValue);
 									text = text.replace(text, value);
 									run.setText(value, 0);
 								}
@@ -449,10 +430,10 @@ public class CollectionTagProcessor {
 		XWPFRun run = newParagraph.createRun();
 		run.setText(value);
 		
-		if (isLastTag) {
-			run.addBreak(BreakType.TEXT_WRAPPING);
-		}
-		
+//		if (isLastTag) {
+//			run.addBreak(BreakType.TEXT_WRAPPING);
+//		}
+//		
 	}
 	
 	private XWPFTable insertNewTable(XWPFTable table, IBodyElement endCollectionElement)
@@ -465,7 +446,6 @@ public class CollectionTagProcessor {
 		XWPFTable newTable = document.insertNewTbl(cursor);
 		
 		return newTable;
-		// run.addBreak(BreakType.TEXT_WRAPPING);
 	}
 
 	private List<TagInfo> getTagsFromCollection(IBody document, List<TagInfo> tags, int startIndex, int endIndex) throws Exception {
