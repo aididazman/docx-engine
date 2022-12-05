@@ -35,7 +35,7 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			System.out.println("Step 1 : Read template file");
-			String templateFileName = "sampleDocument.docx";
+			String templateFileName = "nestedCollection-4.docx";
 			byte[] templateFile = readTemplateFile(templateFileName);
 
 			System.out.println("Step 2 : Prepare sample value");
@@ -43,7 +43,7 @@ public class Main {
 
 			System.out.println("Step 3 : Generate output file from template");
 			byte[] outputFile = process(templateFile, null, TemplateMode.DOCX, values);
-			String outputFileName = "sampleDocument_1.docx";
+			String outputFileName = "nestedCollection_4.docx";
 			writeFile(outputFile, outputFileName);
 
 			System.out.println("Completed.");

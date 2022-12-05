@@ -16,8 +16,8 @@ public class CollectionDO {
 	private int startCollectionIndex;
 	private Integer endCollectionIndex;
 	private IBodyElement endCollectionElement;
-	private boolean hasNestedCollection;
 	private boolean isLastCollectionValue;
+	private boolean isNestedCollection;
 
 	public String getObjectFirstParameter() {
 		return objectFirstParameter;
@@ -91,20 +91,20 @@ public class CollectionDO {
 		this.endCollectionElement = endCollectionElement;
 	}
 
-	public boolean isHasNestedCollection() {
-		return hasNestedCollection;
-	}
-
-	public void setHasNestedCollection(boolean hasNestedCollection) {
-		this.hasNestedCollection = hasNestedCollection;
-	}
-
 	public boolean isLastCollectionValue() {
 		return isLastCollectionValue;
 	}
 
 	public void setLastCollectionValue(boolean isLastCollectionValue) {
 		this.isLastCollectionValue = isLastCollectionValue;
+	}
+
+	public boolean isNestedCollection() {
+		return isNestedCollection;
+	}
+
+	public void setNestedCollection(boolean isNestedCollection) {
+		this.isNestedCollection = isNestedCollection;
 	}
 
 }

@@ -229,7 +229,7 @@ public class CollectionTagProcessor {
 								nestedCollectionDO.setResolutionAttributesMap(newValues);
 								nestedCollectionDO.setTag(tag);
 								nestedCollectionDO.setStartCollectionIndex(tag.getTagElementIndex());
-								nestedCollectionDO.setHasNestedCollection(true);
+								nestedCollectionDO.setNestedCollection(true);
 								nestedCollectionDO = getEndCollectionIndex(paragraph, tag.getTagElementIndex(), nestedCollectionDO, collectionDO.getEndCollectionElement());	
 								nestedCollectionDO = getCollection(nestedCollectionDO);
 																							
@@ -242,8 +242,6 @@ public class CollectionTagProcessor {
 
 						else if (COLLECTION_OBJECT_FIELD_PATTERN_2.matcher(tagName).matches()) {
 							nonParentNestedCollectionName = getFirstParameter(tagName); // employees:name -> employees
-
-							//nestedCollectionDO.setEndCollectionElement(collectionDO.getEndCollectionElement());
 							
 							if (resolutionAttributesMap.containsKey(nonParentNestedCollectionName)) {
 								Object newCollectionValue = resolutionAttributesMap.get(nonParentNestedCollectionName);
@@ -252,12 +250,18 @@ public class CollectionTagProcessor {
 								Map<String, Object> newValues = new HashMap<String, Object>();
 								newValues.put(nonParentNestedCollectionName, newCollectionValue);
 								
+								boolean isLastCollectionValue = collectionValue == collectionDO.getCollectionValues().get(collectionDO.getCollectionValues().size() - 1);
+								if (isLastCollectionValue) {
+									nestedCollectionDO.setLastCollectionValue(true);
+								} else
+									nestedCollectionDO.setLastCollectionValue(false);
+								
 								nestedCollectionDO.setTagName(tagName);
 								nestedCollectionDO.setObjectFirstParameter(nonParentNestedCollectionName);
 								nestedCollectionDO.setResolutionAttributesMap(newValues); //set resolution attribute
 								nestedCollectionDO.setTag(tag);
 								nestedCollectionDO.setStartCollectionIndex(tag.getTagElementIndex());
-								nestedCollectionDO.setHasNestedCollection(true);								
+								nestedCollectionDO.setNestedCollection(true);								
 								nestedCollectionDO = getEndCollectionIndex(paragraph, tag.getTagElementIndex(), nestedCollectionDO, collectionDO.getEndCollectionElement());	
 								nestedCollectionDO = getCollection(nestedCollectionDO);
 								
@@ -366,7 +370,7 @@ public class CollectionTagProcessor {
 	private void processCollectionInTable(XWPFTable table, CollectionDO collectionDO)
 			throws Exception {
 		
-		if (collectionDO.isHasNestedCollection()) {
+		if (collectionDO.isNestedCollection()) {
 			processCollectionInTableNested(table, collectionDO);
 		} else {
 			for (int value = 0; value < collectionDO.getCollectionValues().size(); value++) {
@@ -383,7 +387,7 @@ public class CollectionTagProcessor {
 					String firstRowText = table.getRow(1).getCell(cell).getTextRecursively();
 					List<TagInfo> tags = new ArrayList<>();
 					tags = DocxUtils.getTagsByElement(firstRowText, 0, tags);
-
+					
 					for (XWPFParagraph paragraph : cellTable.getParagraphs()) {
 
 						for (TagInfo tag : tags) {
@@ -417,6 +421,225 @@ public class CollectionTagProcessor {
 		}
 	}
 	
+	private void processCollectionInTableNew(XWPFTable tableElementAfterStartCollection, CollectionDO collectionDO)
+			throws Exception {
+		
+		String nonParentNestedCollectionName = null;
+		
+		if (collectionDO.isNestedCollection()) {
+			processCollectionInTableNested(tableElementAfterStartCollection, collectionDO);
+		} else {
+			for (int value = 0; value < collectionDO.getCollectionValues().size(); value++) {
+				tableElementAfterStartCollection.createRow();
+			}
+
+			for (int row = 2; row < tableElementAfterStartCollection.getRows().size(); row++) {
+				XWPFTableRow rowTable = tableElementAfterStartCollection.getRows().get(row);
+
+				for (int cell = 0; cell < rowTable.getTableCells().size(); cell++) {
+					XWPFTableCell cellTable = rowTable.getTableCells().get(cell);
+					
+					List<IBodyElement> firstRowCellBodyElements = tableElementAfterStartCollection.getRow(1).getCell(cell).getBodyElements();
+					for (IBodyElement firstRowCellBodyElement : firstRowCellBodyElements) {
+						List<TagInfo> tags = new ArrayList<>();
+						
+						if (firstRowCellBodyElement instanceof XWPFParagraph) {
+
+							XWPFParagraph firstRowCellParagraph = (XWPFParagraph) firstRowCellBodyElement;
+							String firstRowCellParagraphText = firstRowCellParagraph.getText();
+
+							if (!DocxUtils.isNullEmpty(firstRowCellParagraphText)) {
+								tags = DocxUtils.getTagsByElement(firstRowCellParagraphText, 0, tags);
+								//tags = getTagsFromCollection(firstRowCellBodyElement.getBody(), tags, collectionDO.getStartCollectionIndex() + 1, collectionDO.getEndCollectionIndex());
+								//process empty body element in each new cell for firstRowCellBodyElement
+								List<XWPFParagraph> cellParagraphs = cellTable.getParagraphs();
+								for (XWPFParagraph cellParagraph : cellParagraphs) {
+									//TODO
+									for (TagInfo tag : tags) {
+										//testProcessor.process(cellParagraph, tag, collectionDO.getResolutionAttributesMap(), collectionDO);
+										String tagText = DocxUtils.addTagBracket(tag.getTagText());
+										Object collectionValue = collectionDO.getCollectionValues().get(row - 2);
+
+										if (COLLECTION_OBJECT_PATTERN.matcher(tagText).matches()) {
+
+											XWPFRun run = cellParagraph.createRun();
+											String text = run.getText(0);
+
+											if (DocxUtils.isNullEmpty(text))
+												text = DocxConstants.EMPTY_STRING;
+
+											//Object collectionValue = collectionDO.getCollectionValues().get(row - 2);
+											String className = getClassName(tag.getTagText());
+
+											if (collectionValue.getClass().getSimpleName().equalsIgnoreCase(className)) {
+												String objectField = getClassField(tag.getTagText());
+												String value = DocxUtils.getFieldValue(objectField, collectionValue);
+												text = text.replace(text, value);
+												run.setText(text, 0); //TODO
+											}
+										}
+										
+										else if (COLLECTION_START_PATTERN_1.matcher(tagText).matches()
+												|| COLLECTION_START_PATTERN_2.matcher(tagText).matches()) {
+											String tagName = DocxUtils.getTagName(tag, DocxConstants.TAG_PREFIX_COLLECTION_START);
+											TestProcessor testProcessor = new TestProcessor();
+											
+											//cellParagraph.getBody().getBodyElements();
+											//insertNewParagraph(cellParagraph, DocxConstants.EMPTY_STRING,  cellParagraph, false);
+											
+											//XWPFTable newTable = insertNewTable(tableElementAfterStartCollection, cellParagraph);
+											//newTable.createRow();
+
+//											if (COLLECTION_OBJECT_FIELD_PATTERN_1.matcher(tagName).matches()) {
+//												// returns example value user.phones:phone -> user.phones
+//												String nestedCollectionName = getFirstParameter(tagName);
+//												// returns user from user.phones
+//												String nestedCollectionClassName = getClassName(nestedCollectionName);
+//
+//												// belongs to parent collection values
+//												if (collectionValue.getClass().getSimpleName().equalsIgnoreCase(nestedCollectionClassName)) {
+//													// new map
+//													Map<String, Object> newValues = new HashMap<String, Object>();
+//													newValues.put(nestedCollectionName, collectionValue);
+//													
+//													IBodyElement nestedCollectionElement = firstRowCellBodyElements.get(tag.getTagElementIndex());
+//													
+////													IBodyElement nestedCollectionElement = firstRowCellParagraph.getBody()
+////															.getBodyElements().get(tag.getTagElementIndex());
+//													
+//													CollectionDO nestedCollectionDO = new CollectionDO();
+//													
+//													boolean isLastCollectionValue = collectionValue == collectionDO.getCollectionValues().get(collectionDO.getCollectionValues().size() - 1);
+//													if (isLastCollectionValue) {
+//														nestedCollectionDO.setLastCollectionValue(true);
+//													} else
+//														nestedCollectionDO.setLastCollectionValue(false);
+//													
+//													nestedCollectionDO.setTagName(tagName);
+//													nestedCollectionDO.setObjectFirstParameter(nestedCollectionName);
+//													nestedCollectionDO.setResolutionAttributesMap(newValues);
+//													nestedCollectionDO.setTag(tag);
+//													nestedCollectionDO.setStartCollectionIndex(tag.getTagElementIndex());
+//													nestedCollectionDO.setNestedCollection(true);
+//													nestedCollectionDO = getEndCollectionIndex(firstRowCellParagraph, tag.getTagElementIndex(), nestedCollectionDO, collectionDO.getEndCollectionElement());	
+//													nestedCollectionDO = getCollection(nestedCollectionDO);
+//																												
+//													if (nestedCollectionElement instanceof XWPFParagraph) {
+//														XWPFParagraph nestedParagraph = (XWPFParagraph) nestedCollectionElement;
+//														testProcessor.process(nestedParagraph, tag, newValues, nestedCollectionDO);
+//													} 
+//												}
+//											}
+										}
+									}				
+								}							
+							}
+						} 
+						
+//						else if (firstRowCellBodyElement instanceof XWPFTable) {
+//
+//							XWPFTable nestedTable = (XWPFTable) firstRowCellBodyElement;
+//
+//							for (XWPFTableRow nestedTableRow : nestedTable.getRows()) {
+//								for (XWPFTableCell nestedTableCell : nestedTableRow.getTableCells()) {
+//									for (XWPFParagraph paragraph : nestedTableCell.getParagraphs()) {
+//										String paragraphText = paragraph.getText();
+//										if (!DocxUtils.isNullEmpty(paragraphText)) {
+//											tags = DocxUtils.getTagsByElement(paragraphText, 0, tags);
+////											for (TagInfo tag : tags) {
+////												process(paragraph, tag, resolutionAttributesMap, collectionDO);
+////											}
+//										}
+//									}
+//								}
+//							}
+//						}
+					}
+					
+					
+					
+//					XWPFTableCell cellTable = rowTable.getTableCells().get(cell);
+//					// first row for each column text
+//					String firstRowText = table.getRow(1).getCell(cell).getTextRecursively();
+//					List<TagInfo> tags = new ArrayList<>();
+//					tags = DocxUtils.getTagsByElement(firstRowText, 0, tags);
+//
+//					//TODO cellTable.getBodyElements()
+//					for (TagInfo tag : tags) {
+//						if (!DocxUtils.isNullEmpty(cellTable.getBodyElements())) {
+//							TestProcessor testProcess = new TestProcessor();
+//							IBodyElement bodyElem = cellTable.getBodyElements().get(0);
+//							while (bodyElem != null) {
+//								testProcess.processTagType(bodyElem, collectionDO.getResolutionAttributesMap(), collectionDO);
+//								//returns next element after removing in-replaced tags
+//								bodyElem = testProcess.removeTagsByElement(bodyElem);
+//								//bodyElem = DocxUtils.getNextSibling(bodyElem);
+//							}
+//						}
+//					}
+					
+					
+//					for (XWPFParagraph paragraph : cellTable.getParagraphs()) {
+//
+//						for (TagInfo tag : tags) {
+//
+//							String tagText = DocxUtils.addTagBracket(tag.getTagText());
+//
+//							if (COLLECTION_OBJECT_PATTERN.matcher(tagText).matches()) {
+//
+//								XWPFRun run = paragraph.createRun();
+//								String text = run.getText(0);
+//
+//								if (DocxUtils.isNullEmpty(text))
+//									text = DocxConstants.EMPTY_STRING;
+//
+//								Object collectionValue = collectionDO.getCollectionValues().get(row - 2);
+//								String className = getClassName(tag.getTagText());
+//
+//								if (collectionValue.getClass().getSimpleName().equalsIgnoreCase(className)) {
+//									String objectField = getClassField(tag.getTagText());
+//									String value = DocxUtils.getFieldValue(objectField, collectionValue);
+//									text = text.replace(text, value);
+//									run.setText(value, 0);
+//								}
+//							}
+//						}
+//					}
+				}
+				
+				XWPFParagraph testParagraph = tableElementAfterStartCollection.getRow(2).getCell(2).getParagraphArray(0);
+				XWPFTable tableTwo = tableElementAfterStartCollection.getRow(2).getCell(2).insertNewTbl(testParagraph.getCTP().newCursor());
+				
+				tableTwo.getCTTbl().addNewTblPr().addNewTblBorders().addNewLeft().setVal(
+					     org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE);
+					    tableTwo.getCTTbl().getTblPr().getTblBorders().addNewRight().setVal(
+					     org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE);
+					    tableTwo.getCTTbl().getTblPr().getTblBorders().addNewTop().setVal(
+					     org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE);
+					    tableTwo.getCTTbl().getTblPr().getTblBorders().addNewBottom().setVal(
+					     org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE);
+					    tableTwo.getCTTbl().getTblPr().getTblBorders().addNewInsideH().setVal(
+					     org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE);
+					    tableTwo.getCTTbl().getTblPr().getTblBorders().addNewInsideV().setVal(
+					     org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE);
+
+//				XWPFRun testRun = testParagraph.createRun();
+//				String text = testRun.getText(0);
+//
+//				if (DocxUtils.isNullEmpty(text))
+//					text = DocxConstants.EMPTY_STRING;
+//				
+//				text = text.replace(text, "TEST");
+//				testRun.setText(text, 0);
+				
+				
+				tableElementAfterStartCollection.getRow(2).getCell(2).insertTable(row, tableElementAfterStartCollection);
+			}
+
+			tableElementAfterStartCollection.removeRow(1);
+		}
+	}
+	
 
 	
 	private void insertNewParagraph(XWPFParagraph paragraph, String value, IBodyElement endCollectionElement, boolean isLastTag)
@@ -429,11 +652,7 @@ public class CollectionTagProcessor {
 		XWPFParagraph newParagraph = document.insertNewParagraph(cursor);
 		XWPFRun run = newParagraph.createRun();
 		run.setText(value);
-		
-//		if (isLastTag) {
-//			run.addBreak(BreakType.TEXT_WRAPPING);
-//		}
-//		
+		// isLastTag TODO
 	}
 	
 	private XWPFTable insertNewTable(XWPFTable table, IBodyElement endCollectionElement)
@@ -534,7 +753,7 @@ public class CollectionTagProcessor {
 									endTagIndex = i;
 									collectionDO.setEndCollectionIndex(endTagIndex);
 									// must set a new condition to cater nested collection end element
-									if (!collectionDO.isHasNestedCollection()) {
+									if (!collectionDO.isNestedCollection()) {
 										collectionDO.setEndCollectionElement(bodyElem);
 									} else
 										collectionDO.setEndCollectionElement(parentCollection);							

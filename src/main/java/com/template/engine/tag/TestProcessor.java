@@ -196,7 +196,7 @@ public class TestProcessor {
 				objectKey = collectionTag.getFirstParameter(tagName); // user.phones:phone -> user.phones or listOfUser:user-> listOfUser
 				//for nested collection 
 				if (resolutionAttributesMap.containsKey(objectKey)) {
-					if (collectionDO.isHasNestedCollection()) {
+					if (collectionDO.isNestedCollection()) {
 						IBodyElement nextElem = DocxUtils.getNextSibling(paragraph);
 						collectionTag.newProcess(nextElem, collectionDO, resolutionAttributesMap);
 					} else {
