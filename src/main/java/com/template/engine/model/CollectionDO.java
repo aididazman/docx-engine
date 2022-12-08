@@ -7,32 +7,24 @@ import org.apache.poi.xwpf.usermodel.IBodyElement;
 
 public class CollectionDO {
 
-	private String objectFirstParameter;
-	private String objectSecondParameter;
+	private String mapKey;
 	private String tagName;
 	private Map<String, Object> resolutionAttributesMap;
-	private TagInfo tag;
 	private List<Object> collectionValues;
 	private int startCollectionIndex;
 	private Integer endCollectionIndex;
 	private IBodyElement endCollectionElement;
 	private boolean isLastCollectionValue;
 	private boolean isNestedCollection;
+	private boolean isElementInTable;
+	private ParentTableDO parentTableDO;
 
-	public String getObjectFirstParameter() {
-		return objectFirstParameter;
+	public String getMapKey() {
+		return mapKey;
 	}
 
-	public void setObjectFirstParameter(String objectFirstParameter) {
-		this.objectFirstParameter = objectFirstParameter;
-	}
-
-	public String getObjectSecondParameter() {
-		return objectSecondParameter;
-	}
-
-	public void setObjectSecondParameter(String objectSecondParameter) {
-		this.objectSecondParameter = objectSecondParameter;
+	public void setMapKey(String mapKey) {
+		this.mapKey = mapKey;
 	}
 
 	public String getTagName() {
@@ -49,14 +41,6 @@ public class CollectionDO {
 
 	public void setResolutionAttributesMap(Map<String, Object> resolutionAttributesMap) {
 		this.resolutionAttributesMap = resolutionAttributesMap;
-	}
-
-	public TagInfo getTag() {
-		return tag;
-	}
-
-	public void setTag(TagInfo tag) {
-		this.tag = tag;
 	}
 
 	public List<Object> getCollectionValues() {
@@ -105,6 +89,22 @@ public class CollectionDO {
 
 	public void setNestedCollection(boolean isNestedCollection) {
 		this.isNestedCollection = isNestedCollection;
+	}
+
+	public boolean isElementInTable() {
+		return isElementInTable;
+	}
+
+	public void setElementInTable(boolean isElementInTable) {
+		this.isElementInTable = isElementInTable;
+	}
+
+	public ParentTableDO getParentTableDO() {
+		return parentTableDO;
+	}
+
+	public void setParentTableDO(ParentTableDO parentTableDO) {
+		this.parentTableDO = parentTableDO;
 	}
 
 }

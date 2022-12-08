@@ -9,8 +9,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -24,7 +26,6 @@ import com.template.engine.model.ListOfPhone;
 import com.template.engine.model.ListOfUser;
 import com.template.engine.model.Phone;
 import com.template.engine.model.User;
-import com.template.engine.tag.TestProcessor;
 import com.template.engine.templatemode.TemplateMode;
 
 public class Main {
@@ -35,7 +36,7 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			System.out.println("Step 1 : Read template file");
-			String templateFileName = "nestedCollection-4.docx";
+			String templateFileName = "new.docx";
 			byte[] templateFile = readTemplateFile(templateFileName);
 
 			System.out.println("Step 2 : Prepare sample value");
@@ -43,7 +44,7 @@ public class Main {
 
 			System.out.println("Step 3 : Generate output file from template");
 			byte[] outputFile = process(templateFile, null, TemplateMode.DOCX, values);
-			String outputFileName = "nestedCollection_4.docx";
+			String outputFileName = "sampleDocument.docx";
 			writeFile(outputFile, outputFileName);
 
 			System.out.println("Completed.");
@@ -140,16 +141,22 @@ public class Main {
 		headerAndFooter.setHeader("THIS IS HEADER");
 		headerAndFooter.setFooter("THIS IS FOOTER");
 		
-		ListOfUser listOfUser = new ListOfUser();
-		listOfUser.setUsers(Arrays.asList(aidid, amin, afif));
+		List<User> listOfUserCollection = new ArrayList<>(); //check type
+		listOfUserCollection.add(aidid);
+		listOfUserCollection.add(amin);
+		listOfUserCollection.add(afif);
 		
-		ListOfPhone listOfPhone = new ListOfPhone();
-		listOfPhone.setPhones(Arrays.asList(phone1, phone2, phone3));
+		List<Phone> listOfPhoneCollection = new ArrayList<>(); //check type
+		listOfPhoneCollection.add(phone1);
+		listOfPhoneCollection.add(phone2);
+		listOfPhoneCollection.add(phone3);
+		
 		
 		Map<String, Object> values = new HashMap<String, Object>();
-		values.put("listOfPhone", listOfPhone);
-		//values.put("user.phones", aidid); // for non nested 
-		values.put("listOfUser", listOfUser);
+		values.put("listOfPhone", listOfPhoneCollection);
+		values.put("user.phones", aidid); // for non nested 
+		values.put("listOfUser", listOfUserCollection);
+		//values.put("listOfUser", listOfUser);
 		values.put("headerAndFooter.header", headerAndFooter);
 		values.put("footer", "This is footer");
 		values.put("lightning", image);
@@ -172,8 +179,8 @@ public class Main {
 			if (content == null)
 				throw new Exception("Template content is null.");
 			
-			TestProcessor testTagProcessor = new TestProcessor(content, resolutionAttributesMap);
-			return testTagProcessor.generateDocument();
+			DocxEngine docxEngine = new DocxEngine(content, resolutionAttributesMap);
+			return docxEngine.generateDocument();
 
 		} catch (Exception e) {
 			e.printStackTrace();

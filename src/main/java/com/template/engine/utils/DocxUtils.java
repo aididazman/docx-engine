@@ -2,6 +2,8 @@ package com.template.engine.utils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.poi.xwpf.usermodel.IBody;
@@ -23,6 +25,19 @@ public class DocxUtils {
 
 	private DocxUtils() {
 		throw new IllegalStateException("Util class");
+	}
+	
+	private static final Pattern OBJECT_PATTERN = Pattern.compile("[a-zA-Z]+\\.[a-zA-Z]+");
+	
+	public static String getMapKey(String tag) {
+
+		String firstParameter = null;
+		int indexOfColon = tag.indexOf(":", 0);
+		if (indexOfColon > 0) {
+			firstParameter = tag.substring(0, indexOfColon);
+		}
+
+		return firstParameter;
 	}
 
 	// Method to add tag character in front and back of the string
@@ -75,14 +90,52 @@ public class DocxUtils {
 
 		return tagValue;
 	}
+	
+	public static String processValue(String tagName, Map<String, Object> resolutionAttributesMap) {
+		
+		String value = null;
+		Object mapValue = null;
+		String tagObjectField = null;
+		
+		if (OBJECT_PATTERN.matcher(tagName).matches()) {
+			mapValue = resolutionAttributesMap.get(tagName);
 
+			if (mapValue != null) {
+				tagObjectField = getFieldName(tagName); // get name from user.name
+				if(!isNullEmpty(tagObjectField)) {
+					value = getFieldValue(tagObjectField, mapValue);
+				}	
+			}
+		}
+
+		else {
+			mapValue = resolutionAttributesMap.get(tagName);
+			if (mapValue != null) {
+				value = mapValue.toString();
+			}
+		}
+		return value;
+	}
+	
+	private static String getFieldName(String tagName) {
+
+		String fieldName = null;
+		int indexOfDot = tagName.indexOf(".", 0);
+		if (indexOfDot > 0) {
+			fieldName = tagName.substring(indexOfDot + 1, tagName.length());
+			;
+		}
+
+		return fieldName;
+	}
+	
 	/**
 	 * Returns next sibling body element
 	 *
 	 * @param elem source element
 	 * @return next body element on the same level (the same parent).
 	 */
-	public static IBodyElement getNextSibling(IBodyElement elem) {
+	public static IBodyElement getNextElement(IBodyElement elem) {
 		for (int i = 0; i < elem.getBody().getBodyElements().size() - 1; i++) {
 			if (elem.getBody().getBodyElements().get(i) == elem) {
 				return elem.getBody().getBodyElements().get(i + 1);
@@ -92,6 +145,10 @@ public class DocxUtils {
 		return null;
 	}
 
+	/**
+     * @param element
+     * @return index of the element (number of child of the element's parent)
+     */
 	public static int getElementIndex(IBodyElement element) {
 		IBody body = element.getBody();
 		for (int i = 0; i < body.getBodyElements().size(); i++) {
