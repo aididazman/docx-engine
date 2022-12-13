@@ -1,24 +1,18 @@
 package com.template.engine.model;
 
+import org.apache.poi.xwpf.usermodel.IBodyElement;
+
 public class TagInfo {
 
 	private String tagText;
 	private int tagStartOffset = 0;
-	private boolean hasClosingSlash = false;
-	private int tagElementIndex = 0;
-	private boolean hasProcessed = false;
-
-	public TagInfo(String tagText, int tagStartOffset, boolean hasClosingSlash) {
-		this.tagText = tagText;
-		this.tagStartOffset = tagStartOffset;
-		this.hasClosingSlash = hasClosingSlash;
-	}
+	private IBodyElement tagElement;
 	
-	public TagInfo(String tagText, int tagStartOffset, boolean hasClosingSlash, int tagElementIndex) {
+	public TagInfo(String tagText, int tagStartOffset, IBodyElement tagElement) {
+		super();
 		this.tagText = tagText;
 		this.tagStartOffset = tagStartOffset;
-		this.hasClosingSlash = hasClosingSlash;
-		this.tagElementIndex = tagElementIndex;
+		this.tagElement = tagElement;
 	}
 
 	public String getTagText() {
@@ -37,34 +31,17 @@ public class TagInfo {
 		this.tagStartOffset = tagStartOffset;
 	}
 
-	public boolean hasClosingSlash() {
-		return hasClosingSlash;
+	public IBodyElement getTagElement() {
+		return tagElement;
 	}
 
-	public void hasClosingSlash(boolean hasClosingSlash) {
-		this.hasClosingSlash = hasClosingSlash;
-	}
-
-	public int getTagElementIndex() {
-		return tagElementIndex;
-	}
-
-	public void setTagElementIndex(int tagElementIndex) {
-		this.tagElementIndex = tagElementIndex;
+	public void setTagElement(IBodyElement tagElement) {
+		this.tagElement = tagElement;
 	}
 	
-	public boolean isHasProcessed() {
-		return hasProcessed;
-	}
-
-	public void setHasProcessed(boolean hasProcessed) {
-		this.hasProcessed = hasProcessed;
-	}
-
 	@Override
 	public String toString() {
-		return "TagInfo [tagText=" + tagText + ", tagStartOffset=" + tagStartOffset + ", hasClosingSlash="
-				+ hasClosingSlash + ", tagElementIndex=" + tagElementIndex + ", hasProcessed=" + hasProcessed + "]";
+		return "TagInfo [tagText=" + tagText + ", tagElement=" + tagElement + "]";
 	}
 
 }

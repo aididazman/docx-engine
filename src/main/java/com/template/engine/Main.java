@@ -36,7 +36,7 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			System.out.println("Step 1 : Read template file");
-			String templateFileName = "new.docx";
+			String templateFileName = "Sample template.docx";
 			byte[] templateFile = readTemplateFile(templateFileName);
 
 			System.out.println("Step 2 : Prepare sample value");
@@ -154,7 +154,7 @@ public class Main {
 		
 		Map<String, Object> values = new HashMap<String, Object>();
 		values.put("listOfPhone", listOfPhoneCollection);
-		values.put("user.phones", aidid); // for non nested 
+		//values.put("user.phones", aidid); // for non nested 
 		values.put("listOfUser", listOfUserCollection);
 		//values.put("listOfUser", listOfUser);
 		values.put("headerAndFooter.header", headerAndFooter);

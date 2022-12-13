@@ -12,7 +12,9 @@ public class CollectionDO {
 	private Map<String, Object> resolutionAttributesMap;
 	private List<Object> collectionValues;
 	private int startCollectionIndex;
+	private String startCollectionName;
 	private Integer endCollectionIndex;
+	private String endCollectionName;
 	private IBodyElement endCollectionElement;
 	private boolean isLastCollectionValue;
 	private boolean isNestedCollection;
@@ -105,6 +107,22 @@ public class CollectionDO {
 
 	public void setParentTableDO(ParentTableDO parentTableDO) {
 		this.parentTableDO = parentTableDO;
+	}
+
+	public String getStartCollectionName() {
+		return startCollectionName;
+	}
+
+	public void setStartCollectionName(String startCollectionName) {
+		this.startCollectionName = startCollectionName;
+	}
+
+	public String getEndCollectionName() {
+		return endCollectionName;
+	}
+
+	public void setEndCollectionName(String endCollectionName) {
+		this.endCollectionName = endCollectionName;
 	}
 
 }

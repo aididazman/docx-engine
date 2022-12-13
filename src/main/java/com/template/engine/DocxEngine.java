@@ -34,13 +34,10 @@ public class DocxEngine {
 
 	private static final Pattern FIELD_PATTERN_1 = Pattern.compile("\\$\\{field:[a-zA-Z]+\\}");
 	private static final Pattern FIELD_PATTERN_2 = Pattern.compile("\\$\\{field:[a-zA-Z]+\\.[a-zA-Z]+\\}");
-	private static final Pattern COLLECTION_START_PATTERN_1 = Pattern
-			.compile("\\$\\{collection:[a-zA-Z]+:[a-zA-Z]+\\}");
-	private static final Pattern COLLECTION_START_PATTERN_2 = Pattern
-			.compile("\\$\\{collection:[a-zA-Z]+\\.[a-zA-Z]+:[a-zA-Z]+\\}");
+	private static final Pattern COLLECTION_START_PATTERN_1 = Pattern.compile("\\$\\{collection:[a-zA-Z]+:[a-zA-Z]+\\}");
+	private static final Pattern COLLECTION_START_PATTERN_2 = Pattern.compile("\\$\\{collection:[a-zA-Z]+\\.[a-zA-Z]+:[a-zA-Z]+\\}");
 	private static final Pattern COLLECTION_END_PATTERN_1 = Pattern.compile("\\$\\{/collection:[a-zA-Z]+:[a-zA-Z]+\\}");
-	private static final Pattern COLLECTION_END_PATTERN_2 = Pattern
-			.compile("\\$\\{/collection:[a-zA-Z]+\\.[a-zA-Z]+:[a-zA-Z]+\\}");
+	private static final Pattern COLLECTION_END_PATTERN_2 = Pattern.compile("\\$\\{/collection:[a-zA-Z]+\\.[a-zA-Z]+:[a-zA-Z]+\\}");
 	private static final Pattern COLLECTION_OBJECT_PATTERN = Pattern.compile("\\$\\{[a-zA-Z]+\\.[a-zA-Z]+\\}");
 	private static final Pattern IMAGE_PATTERN = Pattern.compile("\\$\\{image:[a-zA-Z]+\\}");
 	private static final Pattern HEADER_PATTERN = Pattern.compile("\\$\\{header:[a-zA-Z]+\\}");
@@ -88,7 +85,7 @@ public class DocxEngine {
 				processTagType(bodyElem, resolutionAttributesMap, collectionDO);
 				// returns next element after removing in-replaced tags
 				bodyElem = removeTagsByElement(bodyElem);
-				// bodyElem = DocxUtils.getNextElement(bodyElem);
+				//bodyElem = DocxUtils.getNextElement(bodyElem);
 			}
 
 		}
@@ -112,7 +109,7 @@ public class DocxEngine {
 			XWPFParagraph paragraph = (XWPFParagraph) bodyElem;
 			String paragraphText = paragraph.getText();
 			if (!DocxUtils.isNullEmpty(paragraphText)) {
-				tags = DocxUtils.getTagsByElement(paragraphText, 0, tags);
+				tags = DocxUtils.getTagsByElement(paragraphText, 0, tags, bodyElem);
 				for (TagInfo tag : tags) {
 					process(paragraph, tag, resolutionAttributesMap, collectionDO);
 				}
@@ -120,6 +117,7 @@ public class DocxEngine {
 		} else if (bodyElem instanceof XWPFTable) {
 
 			XWPFTable table = (XWPFTable) bodyElem;
+			
 			for (int row = 0; row < table.getRows().size(); row++) {
 				XWPFTableRow tableRow = table.getRows().get(row);
 				
@@ -161,7 +159,7 @@ public class DocxEngine {
 			// before getting value, must check whether the type of the value from map is
 			// object or non-object
 			// returns a value after being processed
-			String tagName = DocxUtils.getTagName(tag, DocxConstants.TAG_PREFIX_HEADER);
+			String tagName = DocxUtils.getTagName(tag.getTagText(), DocxConstants.TAG_PREFIX_HEADER);
 			String tagValue = headerFooterTag.processValue(tagName, resolutionAttributesMap);
 
 			headerFooterTag.fillHeaderFooterTag(paragraph, tagText, tagValue);
@@ -170,13 +168,13 @@ public class DocxEngine {
 		// process footer tag
 		else if (FOOTER_PATTERN.matcher(tagText).matches() || FOOTER_PATTERN_2.matcher(tagText).matches()) {
 
-			System.out.println("The header tag is: " + tagText);
+			System.out.println("The footer tag is: " + tagText);
 			HeaderFooterTagProcessor headerFooterTag = new HeaderFooterTagProcessor();
 
 			// before getting value, must check whether the type of the value from map is
 			// object or non-object
 			// returns a value after being processed
-			String tagName = DocxUtils.getTagName(tag, DocxConstants.TAG_PREFIX_FOOTER);
+			String tagName = DocxUtils.getTagName(tag.getTagText(), DocxConstants.TAG_PREFIX_FOOTER);
 			String tagValue = headerFooterTag.processValue(tagName, resolutionAttributesMap);
 
 			headerFooterTag.fillHeaderFooterTag(paragraph, tagText, tagValue);
@@ -191,7 +189,7 @@ public class DocxEngine {
 			// before getting value, must check whether the type of the value from map is
 			// object or non-object
 			// returns a value after being processed
-			String tagName = DocxUtils.getTagName(tag, DocxConstants.TAG_PREFIX_FIELD);
+			String tagName = DocxUtils.getTagName(tag.getTagText(), DocxConstants.TAG_PREFIX_FIELD);
 			String tagValue = fieldTag.processValue(tagName, resolutionAttributesMap);
 
 			fieldTag.fillFieldTag(paragraph, tagText, tagValue);
@@ -203,7 +201,7 @@ public class DocxEngine {
 			System.out.println("The image tag is: " + tagText);
 			ImageTagProcessor imageTag = new ImageTagProcessor();
 
-			Object value = resolutionAttributesMap.get(DocxUtils.getTagName(tag, DocxConstants.TAG_PREFIX_IMAGE));
+			Object value = resolutionAttributesMap.get(DocxUtils.getTagName(tag.getTagText(), DocxConstants.TAG_PREFIX_IMAGE));
 
 			imageTag.fillImage(paragraph, tagText, value);
 		}
@@ -217,7 +215,7 @@ public class DocxEngine {
 			String mapKey = null;
 
 			// example value// -> users:user / user.phones:phone
-			String tagName = DocxUtils.getTagName(tag, DocxConstants.TAG_PREFIX_COLLECTION_START);
+			String tagName = DocxUtils.getTagName(tag.getTagText(), DocxConstants.TAG_PREFIX_COLLECTION_START);
 			mapKey = DocxUtils.getMapKey(tagName); // user.phones:phone -> user.phones or listOfUser:user->
 														// listOfUser
 			// for nested collection
@@ -233,7 +231,7 @@ public class DocxEngine {
 					collectionDO.setMapKey(mapKey);
 					collectionDO.setResolutionAttributesMap(resolutionAttributesMap);
 					collectionDO.setStartCollectionIndex(DocxUtils.getElementIndex(paragraph));
-					collectionDO = collectionTag.getEndCollectionIndex(paragraph,
+					collectionDO = collectionTag.getEndCollection(paragraph,
 							collectionDO.getStartCollectionIndex(), collectionDO, null);
 
 					if (resolutionAttributesMap.get(mapKey) instanceof ArrayList) {
@@ -269,7 +267,7 @@ public class DocxEngine {
 			String paragraphText = paragraph.getText();
 
 			if (!DocxUtils.isNullEmpty(paragraphText)) {
-				tags = DocxUtils.getTagsByElement(paragraphText, 0, tags);
+				tags = DocxUtils.getTagsByElement(paragraphText, 0, tags, bodyElem);
 
 				for (TagInfo tag : tags) {
 					String tagText = DocxUtils.addTagBracket(tag.getTagText());
@@ -303,11 +301,11 @@ public class DocxEngine {
 		if (cellBodyElement instanceof XWPFParagraph) {
 			XWPFParagraph paragraph = (XWPFParagraph) cellBodyElement;
 			String paragraphText = paragraph.getText();
-			int elementIndex = getParagraphIndex(tableCell.getParagraphs(), paragraph);
+			int elementIndex = DocxUtils.getParagraphIndex(tableCell.getParagraphs(), paragraph);
 			boolean isLastParagraph = paragraph == tableCell.getParagraphs().get(tableCell.getParagraphs().size() - 1);
 
 			if (!DocxUtils.isNullEmpty(paragraphText)) {
-				tags = DocxUtils.getTagsByElement(paragraphText, 0, tags);
+				tags = DocxUtils.getTagsByElement(paragraphText, 0, tags, cellBodyElement);
 
 				for (TagInfo tag : tags) {
 					String tagText = DocxUtils.addTagBracket(tag.getTagText());
@@ -358,68 +356,5 @@ public class DocxEngine {
 
 		return nextElement;
 	}
-	
-	
-	private int getParagraphIndex(List<XWPFParagraph> paragraphList, XWPFParagraph paragraph) {
-        int index = -1;
-        for (XWPFParagraph paraprgaph : paragraphList) {
-            if (paraprgaph instanceof XWPFParagraph) {
-                index++;
-            }
-            if (paraprgaph == paragraph) {
-                return index;
-            }
-        }
-        return -1;
-    }
-	
-	
-//	private IBodyElement removeTagsByElement(DocxVO docxVO) throws Exception {
-//
-//		List<TagInfo> tags = new ArrayList<>();
-//
-//		int elementIndex = DocxUtils.getElementIndex(docxVO.getParagraphBodyElement());
-//		docxVO.setElementIndex(elementIndex);
-//
-//		// before remove get next element
-//		IBodyElement nextElement = DocxUtils.getNextElement(docxVO.getParagraphBodyElement());
-//	
-//		XWPFParagraph paragraph = docxVO.getParagraphBodyElement();
-//		String paragraphText = paragraph.getText();
-//
-//		if (!DocxUtils.isNullEmpty(paragraphText)) {
-//			tags = DocxUtils.getTagsByElement(paragraphText, 0, tags);
-//
-//			for (TagInfo tag : tags) {
-//				String tagText = DocxUtils.addTagBracket(tag.getTagText());
-//
-//				// remove if
-//				if (COLLECTION_START_PATTERN_1.matcher(tagText).matches()) {
-//					removeTags(docxVO);
-//				} else if (COLLECTION_START_PATTERN_2.matcher(tagText).matches()) {
-//					removeTags(docxVO);
-//				} else if (COLLECTION_END_PATTERN_1.matcher(tagText).matches()) {
-//					removeTags(docxVO);
-//				} else if (COLLECTION_END_PATTERN_2.matcher(tagText).matches()) {
-//					removeTags(docxVO);
-//				} else if (COLLECTION_OBJECT_PATTERN.matcher(tagText).matches()) {
-//					removeTags(docxVO);
-//				}
-//			}
-//		}
-//		
-//		return nextElement;
-//	}
-//	
-//	private void removeTags(DocxVO docxVO) {
-//		
-//		if (docxVO.isTagInTableCell()) {
-//			XWPFTableCell tableCell = docxVO.getTableCell();
-//			tableCell.removeParagraph(docxVO.getElementIndex());
-//		} else {
-//			XWPFParagraph paragraph = docxVO.getParagraphBodyElement();
-//			paragraph.getBody().getXWPFDocument().removeBodyElement(docxVO.getElementIndex());
-//		}
-//	}
 
 }

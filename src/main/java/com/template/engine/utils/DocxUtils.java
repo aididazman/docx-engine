@@ -29,17 +29,6 @@ public class DocxUtils {
 	
 	private static final Pattern OBJECT_PATTERN = Pattern.compile("[a-zA-Z]+\\.[a-zA-Z]+");
 	
-	public static String getMapKey(String tag) {
-
-		String firstParameter = null;
-		int indexOfColon = tag.indexOf(":", 0);
-		if (indexOfColon > 0) {
-			firstParameter = tag.substring(0, indexOfColon);
-		}
-
-		return firstParameter;
-	}
-
 	// Method to add tag character in front and back of the string
 	public static String addTagBracket(String tagValue) {
 
@@ -50,7 +39,8 @@ public class DocxUtils {
 		return tagValueWithBracket.toString();
 	}
 
-	public static List<TagInfo> getTagsByElement(String elementText, int tagStartOffset, List<TagInfo> tags) throws Exception {
+	public static List<TagInfo> getTagsByElement(String elementText, int tagStartOffset, List<TagInfo> tags,
+			IBodyElement tagElement) throws Exception {
 
 		tagStartOffset = elementText.indexOf(DocxConstants.DEFAULT_TAG_START, tagStartOffset);
 		if (tagStartOffset >= 0) {
@@ -62,13 +52,12 @@ public class DocxUtils {
 
 			String tagText = elementText.substring(tagStartOffset + DocxConstants.DEFAULT_TAG_START.length(),
 					tagEndOffset);
-			boolean hasClosingSlash = tagText.startsWith("/");
 
-			TagInfo tagInfo = new TagInfo(tagText, tagEndOffset, hasClosingSlash);
+			TagInfo tagInfo = new TagInfo(tagText, tagEndOffset, tagElement);
 			tags.add(tagInfo);
 
 			// recursive to proceed to get other tags in the same text
-			getTagsByElement(elementText, tagEndOffset, tags);
+			getTagsByElement(elementText, tagEndOffset, tags, tagElement);
 		}
 
 		return tags;
@@ -117,7 +106,7 @@ public class DocxUtils {
 		return value;
 	}
 	
-	private static String getFieldName(String tagName) {
+	static String getFieldName(String tagName) {
 
 		String fieldName = null;
 		int indexOfDot = tagName.indexOf(".", 0);
@@ -127,6 +116,17 @@ public class DocxUtils {
 		}
 
 		return fieldName;
+	}
+	
+	public static String getMapKey(String tag) {
+
+		String firstParameter = null;
+		int indexOfColon = tag.indexOf(":", 0);
+		if (indexOfColon > 0) {
+			firstParameter = tag.substring(0, indexOfColon);
+		}
+
+		return firstParameter;
 	}
 	
 	/**
@@ -159,16 +159,25 @@ public class DocxUtils {
 
 		return -1;
 	}
-
-	public static String getTagName(TagInfo tag, String tagPrefix) {
-		return tag.getTagText().substring(tagPrefix.length());
-	}
+	
+	public static int getParagraphIndex(List<XWPFParagraph> paragraphList, XWPFParagraph paragraph) {
+        int index = -1;
+        for (XWPFParagraph paraprgaph : paragraphList) {
+            if (paraprgaph instanceof XWPFParagraph) {
+                index++;
+            }
+            if (paraprgaph == paragraph) {
+                return index;
+            }
+        }
+        return -1;
+    }
 	
 	public static String getTagName(String tagText, String tagPrefix) {
 		return tagText.substring(tagPrefix.length());
 	}
 
-	static public void replaceTextSegment(XWPFParagraph paragraph, String textToFind, String replacement) {
+	public static void replaceTextSegment(XWPFParagraph paragraph, String textToFind, String replacement) {
 		TextSegment foundTextSegment = null;
 		PositionInParagraph startPos = new PositionInParagraph(0, 0, 0);
 		while ((foundTextSegment = searchText(paragraph, textToFind, startPos)) != null) { // search all text segments
