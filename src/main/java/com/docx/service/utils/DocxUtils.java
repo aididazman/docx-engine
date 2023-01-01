@@ -247,6 +247,9 @@ public class DocxUtils {
 
 			// maybe there is text before textToFind in begin run
 			XWPFRun beginRun = paragraph.getRuns().get(foundTextSegment.getBeginRun());
+			//TODO
+//			boolean isBold = beginRun.isBold();
+//			boolean isItalic = beginRun.isItalic();			
 			String textInBeginRun = beginRun.getText(foundTextSegment.getBeginText());
 			String textBefore = textInBeginRun.substring(0, foundTextSegment.getBeginChar()); // we only need the text
 																								// before
@@ -267,6 +270,11 @@ public class DocxUtils {
 			}
 
 			beginRun.setText(textInBeginRun, foundTextSegment.getBeginText());
+			//TODO
+//			if (isBold)
+//				beginRun.setBold(true);
+//			if (isItalic)
+//				beginRun.setItalic(true);
 
 			// runs between begin run and end run needs to be removed
 			for (int runBetween = foundTextSegment.getEndRun() - 1; runBetween > foundTextSegment

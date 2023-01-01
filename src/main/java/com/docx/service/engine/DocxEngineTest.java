@@ -20,6 +20,7 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 
 import com.docx.service.model.CollectionDO;
+import com.docx.service.model.DocxVO;
 import com.docx.service.model.ParentTableDO;
 import com.docx.service.model.TagInfo;
 import com.docx.service.tag.CollectionTagProcessor;
@@ -30,7 +31,7 @@ import com.docx.service.utils.DocxConstants;
 import com.docx.service.utils.DocxUtils;
 import com.google.common.io.ByteSource;
 
-public class DocxEngine {
+public class DocxEngineTest {
 
 	private static final Pattern FIELD_PATTERN_1 = Pattern.compile("\\$\\{field:[a-zA-Z]+\\}");
 	private static final Pattern FIELD_PATTERN_2 = Pattern.compile("\\$\\{field:[a-zA-Z]+\\.[a-zA-Z]+\\}");
@@ -48,13 +49,13 @@ public class DocxEngine {
 	private byte[] templateContent;
 	private Map<String, Object> resolutionAttributesMap;
 
-	public DocxEngine(byte[] templateContent, Map<String, Object> resolutionAttributesMap) {
+	public DocxEngineTest(byte[] templateContent, Map<String, Object> resolutionAttributesMap) {
 		super();
 		this.templateContent = templateContent;
 		this.resolutionAttributesMap = resolutionAttributesMap;
 	}
 
-	public DocxEngine() {
+	public DocxEngineTest() {
 		// TODO Auto-generated constructor stub
 	}
 
@@ -66,23 +67,28 @@ public class DocxEngine {
 		XWPFDocument document = new XWPFDocument(inputStream);
 
 		CollectionDO collectionDO = new CollectionDO();
+		DocxVO docxVO = new DocxVO();
+		docxVO.setResolutionAttributesMap(resolutionAttributesMap);
 
 		for (XWPFHeader header : document.getHeaderList()) {
 			for (IBodyElement headerElem : header.getBodyElements()) {
-				collectionDO = processTagType(headerElem, resolutionAttributesMap, collectionDO);
+				docxVO.setBodyElement(headerElem);
+				docxVO = processTagType(docxVO);
 			}
 		}
 
 		for (XWPFFooter footer : document.getFooterList()) {
 			for (IBodyElement footerElem : footer.getBodyElements()) {
-				collectionDO = processTagType(footerElem, resolutionAttributesMap, collectionDO);
+				docxVO.setBodyElement(footerElem);
+				docxVO = processTagType(docxVO);
 			}
 		}
 
 		if (!DocxUtils.isNullEmpty(document.getBodyElements())) {
 			IBodyElement bodyElem = document.getBodyElements().get(0);
 			while (bodyElem != null) {
-				collectionDO = processTagType(bodyElem, resolutionAttributesMap, collectionDO);
+				docxVO.setBodyElement(bodyElem);
+				docxVO = processTagType(docxVO);
 				bodyElem = removeTagsByElement(bodyElem, null, false);
 				//bodyElem = DocxUtils.getNextElement(bodyElem);
 			}
@@ -98,24 +104,24 @@ public class DocxEngine {
 		return out.toByteArray();
 	}
 
-	public CollectionDO processTagType(IBodyElement bodyElem, Map<String, Object> resolutionAttributesMap,
-			CollectionDO collectionDO) throws Exception {
+	public DocxVO processTagType(DocxVO docxVO) throws Exception {
 
 		List<TagInfo> tags = new ArrayList<>();
 
-		if (bodyElem instanceof XWPFParagraph) {
+		if (docxVO.getBodyElement() instanceof XWPFParagraph) {
 
-			XWPFParagraph paragraph = (XWPFParagraph) bodyElem;
+			XWPFParagraph paragraph = (XWPFParagraph) docxVO.getBodyElement();
 			String paragraphText = paragraph.getText();
 			if (!DocxUtils.isNullEmpty(paragraphText)) {
-				tags = DocxUtils.getTagsByElement(paragraphText, 0, tags, bodyElem);
+				tags = DocxUtils.getTagsByElement(paragraphText, 0, tags, docxVO.getBodyElement());
 				for (TagInfo tag : tags) {
-					collectionDO = process(paragraph, tag, resolutionAttributesMap, collectionDO);
+					docxVO.setTag(tag);
+					docxVO = process(docxVO);
 				}
 			}
-		} else if (bodyElem instanceof XWPFTable) {
+		} else if (docxVO.getBodyElement() instanceof XWPFTable) {
 
-			XWPFTable table = (XWPFTable) bodyElem;
+			XWPFTable table = (XWPFTable) docxVO.getBodyElement();
 			
 			for (int row = 0; row < table.getRows().size(); row++) {
 				XWPFTableRow tableRow = table.getRows().get(row);
@@ -130,25 +136,28 @@ public class DocxEngine {
 						parentTableDO.setTable(table);
 						parentTableDO.setRowIndex(row);
 						parentTableDO.setCellIndex(cell);
+						//collectionDO.setElementInTable(true);
+						docxVO.setParentTableDO(parentTableDO);				
+						docxVO = processTagType(docxVO);
 						
-						collectionDO.setElementInTable(true);
-						collectionDO.setParentTableDO(parentTableDO);				
-						collectionDO = processTagType(cellBodyElement, resolutionAttributesMap, collectionDO);
-						
-						cellBodyElement = removeTagsByElement(cellBodyElement, tableCell, collectionDO.isElementInTable());
+						boolean isElementInTable = docxVO.getCollectionDO().isElementInTable();
+						cellBodyElement = removeTagsByElement(cellBodyElement, tableCell, isElementInTable);
 						//cellBodyElement = DocxUtils.getNextElement(cellBodyElement);
 					}
 				}
 			}
 		}
-		return collectionDO;
+		return docxVO;
 	}
 	
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public CollectionDO process(XWPFParagraph paragraph, TagInfo tag, Map<String, Object> resolutionAttributesMap,
-			CollectionDO collectionDO) throws Exception {
+	public DocxVO process(DocxVO docxVO) throws Exception {
 
+		XWPFParagraph paragraph = (XWPFParagraph) docxVO.getBodyElement();
+		TagInfo tag = docxVO.getTag();
+		Map<String, Object> resolutionAttributesMap = docxVO.getResolutionAttributesMap();
+		
 		String tagText = DocxUtils.addTagBracket(tag.getTagText());
 
 		// process header tag
@@ -219,42 +228,43 @@ public class DocxEngine {
 			String tagName = DocxUtils.getTagName(tag.getTagText(), DocxConstants.TAG_PREFIX_COLLECTION_START);
 			mapKey = DocxUtils.getMapKey(tagName); // user.phones:phone -> user.phones or listOfUser:user->
 														// listOfUser
-			// for nested collection
+			
+			CollectionDO collectionDO = new CollectionDO();
+			if (docxVO.getParentTableDO() != null)
+				collectionDO.setElementInTable(true);
+	
 			if (resolutionAttributesMap.containsKey(mapKey)) {
+				// for nested collection
+				if (collectionDO.isNestedCollection()) {
+					IBodyElement nextElement = DocxUtils.getNextElement(paragraph);
+					collectionTag.newProcess(nextElement, collectionDO, resolutionAttributesMap);	
+				} 
 				
-				//check whether the current tag is nested or not, if its nested then do not process it
-				//because nested collection tags have been processed when the parent/original
-				//collection tag being processed
-				if (!DocxUtils.isNullEmpty(collectionDO.getTagName())) {
-					int elementIndex = DocxUtils.getElementIndex(paragraph);
-					if ((elementIndex < collectionDO.getEndCollectionIndex())) {
-						return collectionDO;
+				else {
+					collectionDO.setTagName(tagName);
+					collectionDO.setMapKey(mapKey);
+					collectionDO.setResolutionAttributesMap(resolutionAttributesMap);
+					collectionDO.setStartCollectionIndex(DocxUtils.getElementIndex(paragraph));
+					collectionDO = collectionTag.getEndCollection(paragraph,
+							collectionDO.getStartCollectionIndex(), collectionDO, null);
+
+					if (resolutionAttributesMap.get(mapKey) instanceof ArrayList) {
+						ListIterator<Object> iterator = ((ArrayList) resolutionAttributesMap.get(mapKey))
+								.listIterator();
+						List<Object> collectionValues = IteratorUtils.toList(iterator);
+						collectionDO.setCollectionValues(collectionValues);
 					}
-				}
-				
-				collectionDO.setTagName(tagName);
-				collectionDO.setMapKey(mapKey);
-				collectionDO.setResolutionAttributesMap(resolutionAttributesMap);
-				collectionDO.setStartCollectionIndex(DocxUtils.getElementIndex(paragraph));
-				collectionDO = collectionTag.getEndCollection(paragraph,
-						collectionDO.getStartCollectionIndex(), collectionDO, null);
 
-				if (resolutionAttributesMap.get(mapKey) instanceof ArrayList) {
-					ListIterator<Object> iterator = ((ArrayList) resolutionAttributesMap.get(mapKey))
-							.listIterator();
-					List<Object> collectionValues = IteratorUtils.toList(iterator);
-					collectionDO.setCollectionValues(collectionValues);
-				}
+					else if (resolutionAttributesMap.get(mapKey) instanceof Object) {
+						collectionDO = collectionTag.getCollection(collectionDO);
+					}
 
-				else if (resolutionAttributesMap.get(mapKey) instanceof Object) {
-					collectionDO = collectionTag.getCollection(collectionDO);
+					IBodyElement nextElement = DocxUtils.getNextElement(paragraph);
+					collectionTag.newProcess(nextElement, collectionDO, resolutionAttributesMap);
 				}
-
-				IBodyElement nextElement = DocxUtils.getNextElement(paragraph);
-				collectionTag.newProcess(nextElement, collectionDO, resolutionAttributesMap);
 			}
 		}
-		return collectionDO;
+		return docxVO;
 	}
 
 	private IBodyElement removeTagsByElement(IBodyElement bodyElem, XWPFTableCell tableCell, boolean isElementInCell)

@@ -27,37 +27,15 @@ public class ImageTagProcessor {
 	private void fillImageValue(IBodyElement bodyElem, String tagText, Object mapValue)
 			throws InvalidFormatException, IOException {
 
-		if (!DocxUtils.isNullEmpty(tagText)) {
+		ImageDO image = (ImageDO) mapValue;
 
-			ImageDO image = (ImageDO) mapValue;
+		XWPFParagraph paragraph = (XWPFParagraph) bodyElem;
+		XWPFRun run = paragraph.createRun();
+		int imageFormat = getImageFormat(image);
 
-			if (bodyElem instanceof XWPFParagraph) {
-				XWPFParagraph paragraph = (XWPFParagraph) bodyElem;
-				XWPFRun run = paragraph.createRun();
-				int imageFormat = getImageFormat(image);
-
-				DocxUtils.replaceTextSegment(paragraph, tagText, DocxConstants.EMPTY_STRING);
-				run.addPicture(image.getSourceStream(), imageFormat, image.getTitle(),
-						Units.pixelToEMU(image.getWidth()), Units.pixelToEMU(image.getHeight()));
-
-			} else if (bodyElem instanceof XWPFTable) {
-				XWPFTable table = (XWPFTable) bodyElem;
-				for (XWPFTableRow row : table.getRows()) {
-
-					for (XWPFTableCell cell : row.getTableCells()) {
-
-						for (XWPFParagraph paragraph : cell.getParagraphs()) {
-							XWPFRun run = paragraph.createRun();
-							int imageFormat = getImageFormat(image);
-
-							run.addPicture(image.getSourceStream(), imageFormat, image.getTitle(),
-									Units.pixelToEMU(image.getWidth()), Units.pixelToEMU(image.getHeight()));
-						}
-					}
-				}
-			}
-		}
-
+		DocxUtils.replaceTextSegment(paragraph, tagText, DocxConstants.EMPTY_STRING);
+		run.addPicture(image.getSourceStream(), imageFormat, image.getTitle(),
+				Units.pixelToEMU(image.getWidth()), Units.pixelToEMU(image.getHeight())); 
 	}
 
 	/**

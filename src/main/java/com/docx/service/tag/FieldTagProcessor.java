@@ -17,16 +17,7 @@ public class FieldTagProcessor {
 		if (bodyElem instanceof XWPFParagraph) {
 			XWPFParagraph paragraph = (XWPFParagraph) bodyElem;
 			DocxUtils.replaceTextSegment(paragraph, textToBeReplaced, textValue);
-		} else if (bodyElem instanceof XWPFTable) {
-			XWPFTable table = (XWPFTable) bodyElem;
-			for (XWPFTableRow row : table.getRows()) {
-				for (XWPFTableCell cell : row.getTableCells()) {
-					for (IBodyElement cellBodyElem : cell.getBodyElements()) {
-						fillFieldTag(cellBodyElem, textToBeReplaced, textValue);
-					}
-				}
-			}
-		}
+		} 
 	}
 
 	public String processValue(String tagName, Map<String, Object> resolutionAttributesMap) {

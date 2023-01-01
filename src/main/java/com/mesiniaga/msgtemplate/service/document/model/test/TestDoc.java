@@ -1,9 +1,7 @@
-package com.docx.service.engine;
+package com.mesiniaga.msgtemplate.service.document.model.test;
 
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,21 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.imageio.ImageIO;
-
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
-import com.docx.service.model.Children;
-import com.docx.service.model.HeaderAndFooter;
-import com.docx.service.model.ImageDO;
-import com.docx.service.model.ListOfPhone;
-import com.docx.service.model.ListOfUser;
-import com.docx.service.model.Phone;
-import com.docx.service.model.User;
 import com.docx.service.templatemode.TemplateMode;
 import com.google.common.io.ByteSource;
 
-public class Main {
+public class TestDoc {
 
 	private static final String TEMPLATE_PATH = "C:\\Users\\aidid\\Desktop";
 	private static final String OUTPUT_PATH = "C:\\Users\\aidid\\Desktop\\output";
@@ -147,25 +136,25 @@ public class Main {
 		afif.setPhones(Arrays.asList(phone3, phone4));
 		afif.setChilds(Arrays.asList(firstSonAfif, secondSonAfif));
 
-		File imageFile = new File(".//datafiles//lightning.jpg");
-		FileInputStream imageData = new FileInputStream(imageFile);
-		BufferedImage picture = ImageIO.read(imageFile);
+//		File imageFile = new File(".//datafiles//lightning.jpg");
+//		FileInputStream imageData = new FileInputStream(imageFile);
+//		BufferedImage picture = ImageIO.read(imageFile);
+//		
+//		int width = picture.getWidth();
+//		int height = picture.getHeight();
+//		int imageType = XWPFDocument.PICTURE_TYPE_JPEG;
+//		String imageFileName = imageFile.getName();
+//		
+//		ImageDO image = new ImageDO();
+//		image.setTitle(imageFileName);
+//		image.setSourceStream(imageData);
+//		image.setContentType("jpg");
+//		image.setWidth(width);
+//		image.setHeight(height);
 		
-		int width = picture.getWidth();
-		int height = picture.getHeight();
-		int imageType = XWPFDocument.PICTURE_TYPE_JPEG;
-		String imageFileName = imageFile.getName();
-		
-		ImageDO image = new ImageDO();
-		image.setTitle(imageFileName);
-		image.setSourceStream(imageData);
-		image.setContentType("jpg");
-		image.setWidth(width);
-		image.setHeight(height);
-		
-		HeaderAndFooter headerAndFooter  = new HeaderAndFooter();
-		headerAndFooter.setHeader("THIS IS HEADER");
-		headerAndFooter.setFooter("THIS IS FOOTER");
+//		HeaderAndFooter headerAndFooter  = new HeaderAndFooter();
+//		headerAndFooter.setHeader("THIS IS HEADER");
+//		headerAndFooter.setFooter("THIS IS FOOTER");
 		
 		List<User> listOfUserCollection = new ArrayList<>(); //check type
 		listOfUserCollection.add(aidid);
@@ -185,12 +174,12 @@ public class Main {
 		Map<String, Object> values = new HashMap<String, Object>();
 		values.put("listOfPhone", listOfPhoneCollection);
 		values.put("listOfChildren", listOfChildrenCollection);
-		//values.put("user.phones", aidid); 
+		//values.put("user.phones", aidid); // for non nested 
 		values.put("listOfUser", listOfUserCollection);
 		//values.put("listOfUser", listOfUser);
-		values.put("headerAndFooter.header", headerAndFooter);
+		//values.put("headerAndFooter.header", headerAndFooter);
 		values.put("footer", "This is footer");
-		values.put("lightning", image);
+		//values.put("lightning", image);
 		values.put("user.age", aidid);
 		values.put("user.name", aidid);
 		values.put("firstName", "Muhammad");
@@ -210,8 +199,11 @@ public class Main {
 			if (content == null)
 				throw new Exception("Template content is null.");
 			
-			DocxEngine docxEngine = new DocxEngine(content, resolutionAttributesMap);
-			return docxEngine.generateDocument();
+			DocEngineImpl docEngineImpl = new DocEngineImpl();
+			return docEngineImpl.process(content, encoding, templateMode, resolutionAttributesMap);
+			
+//			DocxEngine docxEngine = new DocxEngine(content, resolutionAttributesMap);
+//			return docxEngine.generateDocument();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -220,5 +212,5 @@ public class Main {
 		return null;
 
 	}
-
+	
 }
