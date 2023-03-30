@@ -198,7 +198,7 @@ public class Main {
 
 	}
 
-	private static byte[] process(byte[] content, Map<String, Object> resolutionAttributesMap) {
+	private static byte[] process(byte[] content, Map<String, Object> mapValues) {
 
 		try (InputStream inputStream = new ByteArrayInputStream(content);
 				XWPFDocument document = new XWPFDocument(inputStream);
@@ -207,7 +207,7 @@ public class Main {
 			if (content == null)
 				throw new Exception("Template content is null.");
 			
-			DocxEngine docxEngine = new DocxEngine(content, resolutionAttributesMap);
+			DocxEngine docxEngine = new DocxEngine(content, mapValues);
 			return docxEngine.generateDocument();
 
 		} catch (Exception e) {

@@ -7,7 +7,7 @@ import org.apache.poi.xwpf.usermodel.IBodyElement;
 public class DocxVO {
 
 	private IBodyElement bodyElement;
-	private Map<String, Object> resolutionAttributesMap;
+	private Map<String, Object> mapValues;
 	private CollectionDO collectionDO;
 	private TagDO tagDO;
 	private ParentTableDO parentTableDO;
@@ -22,12 +22,12 @@ public class DocxVO {
 		this.bodyElement = bodyElement;
 	}
 
-	public Map<String, Object> getResolutionAttributesMap() {
-		return resolutionAttributesMap;
+	public Map<String, Object> getMapValues() {
+		return mapValues;
 	}
 
-	public void setResolutionAttributesMap(Map<String, Object> resolutionAttributesMap) {
-		this.resolutionAttributesMap = resolutionAttributesMap;
+	public void setMapValues(Map<String, Object> mapValues) {
+		this.mapValues = mapValues;
 	}
 
 	public CollectionDO getCollectionDO() {

@@ -52,12 +52,12 @@ public class DocxEngine {
 	private static final Pattern IMAGE_PATTERN = Pattern.compile("\\$\\{image:[a-zA-Z]+\\}");
 
 	private byte[] templateContent;
-	private Map<String, Object> resolutionAttributesMap;
+	private Map<String, Object> mapValues;
 
-	public DocxEngine(byte[] templateContent, Map<String, Object> resolutionAttributesMap) {
+	public DocxEngine(byte[] templateContent, Map<String, Object> mapValues) {
 		super();
 		this.templateContent = templateContent;
-		this.resolutionAttributesMap = resolutionAttributesMap;
+		this.mapValues = mapValues;
 	}
 	
 	public byte[] generateDocument() throws Exception {
@@ -68,7 +68,7 @@ public class DocxEngine {
 		XWPFDocument document = new XWPFDocument(inputStream);
 
 		DocxVO docxVO = new DocxVO();
-		docxVO.setResolutionAttributesMap(resolutionAttributesMap);
+		docxVO.setMapValues(mapValues);
 
 		for (XWPFHeader header : document.getHeaderList()) {
 			for (IBodyElement headerElem : header.getBodyElements()) {
@@ -158,7 +158,7 @@ public class DocxEngine {
 
 		XWPFParagraph paragraph = (XWPFParagraph) docxVO.getBodyElement();
 		TagDO tagDO = docxVO.getTagDO();
-		Map<String, Object> resolutionAttributesMap = docxVO.getResolutionAttributesMap();
+		Map<String, Object> mapValues = docxVO.getMapValues();
 		
 		String tagText = DocxUtils.addTagBracket(tagDO.getTagText());
 
@@ -169,7 +169,7 @@ public class DocxEngine {
 			
 			FieldTagProcessor fieldTag = new FieldTagProcessor();
 			String tagName = DocxUtils.getTagName(tagDO.getTagText(), DocxConstants.TAG_PREFIX_FIELD);
-			String tagValue = fieldTag.processValue(tagName, resolutionAttributesMap);
+			String tagValue = fieldTag.processValue(tagName, mapValues);
 
 			fieldTag.fillTag(paragraph, tagText, tagValue);
 		}
@@ -180,7 +180,7 @@ public class DocxEngine {
 			System.out.println("The image tag is: " + tagText);
 			
 			ImageTagProcessor imageTag = new ImageTagProcessor();
-			Object value = resolutionAttributesMap.get(DocxUtils.getTagName(tagDO.getTagText(), DocxConstants.TAG_PREFIX_IMAGE));
+			Object value = mapValues.get(DocxUtils.getTagName(tagDO.getTagText(), DocxConstants.TAG_PREFIX_IMAGE));
 			imageTag.fillImage(paragraph, tagText, value);
 		}
 
@@ -197,7 +197,7 @@ public class DocxEngine {
 			// user.phones:phone -> user.phones or listOfUser:user->listOfUser
 			mapKey = DocxUtils.getMapKey(tagName); 
 	
-			if (resolutionAttributesMap.containsKey(mapKey)) {
+			if (mapValues.containsKey(mapKey)) {
 				// to check whether the collection tag has been processed before
 				List<IBodyElement> bodyElements = paragraph.getBody().getBodyElements();
 				boolean isCollectionProcessed = false;
@@ -212,19 +212,19 @@ public class DocxEngine {
 					}				
 					collectionDO.setTagName(tagName);
 					collectionDO.setMapKey(mapKey);
-					collectionDO.setResolutionAttributesMap(resolutionAttributesMap);
+					collectionDO.setResolutionAttributesMap(mapValues);
 					collectionDO.setStartCollectionIndex(DocxUtils.getElementIndex(paragraph));
 					collectionDO = collectionTag.getEndCollection(paragraph,
 							collectionDO.getStartCollectionIndex(), collectionDO, null);
 					collectionDO.setNextElement(DocxUtils.getNextElement(paragraph));
 
-					if (resolutionAttributesMap.get(mapKey) instanceof ArrayList) {
-						ListIterator<Object> iterator = ((ArrayList) resolutionAttributesMap.get(mapKey)).listIterator();
+					if (mapValues.get(mapKey) instanceof ArrayList) {
+						ListIterator<Object> iterator = ((ArrayList) mapValues.get(mapKey)).listIterator();
 						List<Object> collectionValues = IteratorUtils.toList(iterator);
 						collectionDO.setCollectionValues(collectionValues);
 					}
 
-					else if (resolutionAttributesMap.get(mapKey) instanceof Object) {
+					else if (mapValues.get(mapKey) instanceof Object) {
 						collectionDO = collectionTag.getCollection(collectionDO);
 					}
 
